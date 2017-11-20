@@ -893,6 +893,7 @@ trait WebDav {
 				'{DAV:}getetag'
 			];
 		}
+
 		try {
 			$response = $client->propfind(
 				$this->makeSabrePathNotForFiles($path), $properties, $folderDepth
@@ -902,6 +903,7 @@ trait WebDav {
 		}
 		return $response;
 	}
+
 	/**
 	 * @Then the version folder of file :path for user :user should contain :count element(s)
 	 *
@@ -918,6 +920,7 @@ trait WebDav {
 		$elements = $this->listVersionFolder($user, '/meta/' . $fileId . '/v', 1);
 		PHPUnit_Framework_Assert::assertEquals($count, count($elements) - 1);
 	}
+
 	/**
 	 * @Then the version folder of fileId :fileId for user :user should contain :count element(s)
 	 *
@@ -933,6 +936,7 @@ trait WebDav {
 		$elements = $this->listVersionFolder($user, '/meta/' . $fileId . '/v', 1);
 		PHPUnit_Framework_Assert::assertEquals($count, count($elements) - 1);
 	}
+
 	/**
 	 * @Then the content length of file :path with version index :index for user :user in versions folder should be :length
 	 *
@@ -1368,7 +1372,7 @@ trait WebDav {
 	 * @param string $content
 	 * @param string $destination
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public function userUploadsAFileWithContentTo(
 		$user, $content, $destination
@@ -1378,6 +1382,7 @@ trait WebDav {
 			$this->response = $this->makeDavRequest(
 				$user, "PUT", $destination, [], $file
 			);
+			return $this->response->getHeader('oc-fileid');
 		} catch (BadResponseException $e) {
 			// 4xx and 5xx responses cause an exception
 			$this->response = $e->getResponse();
@@ -2032,4 +2037,29 @@ trait WebDav {
 			$currentFileID, $this->storedFileID
 		);
 	}
+
+	/**
+	 * @When user :user restores version index :versionIndex of file :path using the API
+	 * @Given user :user has restored version index :versionIndex of file :path
+	 * 
+	 * @param string $user
+	 * @param int $versionIndex
+	 * @param string $path
+	 *
+	 * @return void
+	 */
+	public function userRestoresVersionIndexOfFile($user, $versionIndex, $path) {
+		$fileId = $this->getFileIdForPath($user, $path);
+		$client = $this->getSabreClient($user);
+		$versions = array_keys(
+			$this->listVersionFolder($user, '/meta/' . $fileId . '/v', 1)
+		);
+		$client->request(
+			'COPY',
+			$versions[$versionIndex],
+			null,
+			['Destination' => $this->makeSabrePath($user, $path)]
+		);
+	}
+
 }
