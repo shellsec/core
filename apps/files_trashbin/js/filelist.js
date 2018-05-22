@@ -156,6 +156,27 @@
 			this.enableActions();
 		},
 
+		/**
+		 * Event handler for when selecting/deselecting all files
+		 */
+		_onClickSelectAll: function(e) {
+			/*
+			trashbinFiles is a variable which is a clone of this.files.
+			Any change to trashbinFiles will not have any change to this.files
+			 */
+			var trashbinFiles = [];
+			this.files.forEach((v, i) => {
+				var val = (typeof v === 'object') ? Object.assign({}, v) : v;
+				trashbinFiles.push(val);
+			});
+
+			for (var i = 0; i < trashbinFiles.length; i++) {
+				trashbinFiles[i].name = trashbinFiles[i].name + '.d' +
+					Math.floor(trashbinFiles[i].mtime/1000);
+			}
+			OCA.Files.FileList.prototype._onClickSelectAll.call(this, e, trashbinFiles);
+		},
+
 		_onClickRestoreSelected: function(event) {
 			event.preventDefault();
 			var self = this;

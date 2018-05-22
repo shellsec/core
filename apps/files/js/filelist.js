@@ -704,15 +704,16 @@
 		/**
 		 * Event handler for when selecting/deselecting all files
 		 */
-		_onClickSelectAll: function(e) {
+		_onClickSelectAll: function(e, modifiedFiles) {
+			var filesViewed = modifiedFiles ? modifiedFiles : this.files;
 			var checked = $(e.target).prop('checked');
 			this.$fileList.find('td.filename>.selectCheckBox').prop('checked', checked)
 				.closest('tr').toggleClass('selected', checked);
 			this._selectedFiles = {};
 			this._selectionSummary.clear();
 			if (checked) {
-				for (var i = 0; i < this.files.length; i++) {
-					var fileData = this.files[i];
+				for (var i = 0; i < filesViewed.length; i++) {
+					var fileData = filesViewed[i];
 					this._selectedFiles[fileData.id] = fileData;
 					this._selectionSummary.add(fileData);
 				}
