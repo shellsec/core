@@ -165,10 +165,12 @@
 			Any change to trashbinFiles will not have any change to this.files
 			 */
 			var trashbinFiles = [];
-			this.files.forEach((v, i) => {
-				var val = (typeof v === 'object') ? Object.assign({}, v) : v;
-				trashbinFiles.push(val);
-			});
+			for (var i = 0, len = this.files.length; i < len; i++) {
+				trashbinFiles[i] = {};
+				for (var prop in this.files[i]) {
+					trashbinFiles[i][prop] = this.files[i][prop];
+				}
+			}
 
 			for (var i = 0; i < trashbinFiles.length; i++) {
 				trashbinFiles[i].name = trashbinFiles[i].name + '.d' +
