@@ -30,6 +30,7 @@ namespace OC\Core;
 
 use OC\AppFramework\Utility\SimpleContainer;
 use OC\AppFramework\Utility\TimeFactory;
+use OC\Core\Controller\AccountModuleController;
 use OC\Core\Controller\AvatarController;
 use OC\Core\Controller\CloudController;
 use OC\Core\Controller\LoginController;
@@ -121,6 +122,13 @@ class Application extends App {
 				$c->query('UserSession'),
 				$c->query('Session'),
 				$c->query('URLGenerator'));
+		});
+		$container->registerService('AccountModuleController', function (SimpleContainer $c) {
+			return new AccountModuleController(
+				$c->query('AppName'),
+				$c->query('Request'),
+				$c->query('AccountModuleManager'),
+				$c->query('UserSession'));
 		});
 		$container->registerService('TokenController', function (SimpleContainer $c) {
 			return new TokenController(

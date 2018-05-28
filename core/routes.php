@@ -51,6 +51,7 @@ $application->registerRoutes($this, [
 		['name' => 'TwoFactorChallenge#selectChallenge', 'url' => '/login/selectchallenge', 'verb' => 'GET'],
 		['name' => 'TwoFactorChallenge#showChallenge', 'url' => '/login/challenge/{challengeProviderId}', 'verb' => 'GET'],
 		['name' => 'TwoFactorChallenge#solveChallenge', 'url' => '/login/challenge/{challengeProviderId}', 'verb' => 'POST'],
+		['name' => 'AccountModule#nextStep', 'url' => '/login/account/next', 'verb' => 'GET'],
 	],
 	'ocs' => [
 		['name' => 'Cloud#getCapabilities', 'url' => '/cloud/capabilities', 'verb' => 'GET'],
