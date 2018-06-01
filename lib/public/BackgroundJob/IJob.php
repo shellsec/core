@@ -83,4 +83,5 @@ interface IJob {
 	 * @since 7.0.0
 	 */
 	public function getArgument();
+
 }

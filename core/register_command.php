@@ -160,6 +160,7 @@ if (\OC::$server->getConfig()->getSystemValue('installed', false)) {
 	$application->add(new OC\Core\Command\Security\ImportCertificate(\OC::$server->getCertificateManager(null)));
 	$application->add(new OC\Core\Command\Security\RemoveCertificate(\OC::$server->getCertificateManager(null)));
 	$application->add(new OC\Core\Command\Security\ListRoutes(\OC::$server->getRouter()));
+	$application->add(new \OC\Core\Command\Background\Execute(\OC::$server->getJobList()));
 } else {
 	$application->add(new OC\Core\Command\Maintenance\Install(\OC::$server->getConfig()));
 }
