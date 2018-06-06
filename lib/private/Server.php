@@ -91,6 +91,7 @@ use OCP\App\IServiceLoader;
 use OCP\AppFramework\QueryException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Events\EventEmitterTrait;
+use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IServerContainer;
@@ -523,6 +524,7 @@ class Server extends ServerContainer implements IServerContainer, IServiceLoader
 			$connection->getConfiguration()->setSQLLogger($c->getQueryLogger());
 			return $connection;
 		});
+		$this->registerAlias(IDBConnection::class, 'DatabaseConnection');
 		$this->registerService('Db', function (Server $c) {
 			return new Db($c->getDatabaseConnection());
 		});

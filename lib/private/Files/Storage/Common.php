@@ -44,6 +44,8 @@ use OC\Files\Cache\Scanner;
 use OC\Files\Cache\Updater;
 use OC\Files\Filesystem;
 use OC\Files\Cache\Watcher;
+use OC\Lock\Persistent\Lock;
+use OC\Lock\Persistent\LockMapper;
 use OCP\Constants;
 use OCP\Files\FileInfo;
 use OCP\Files\FileNameTooLongException;
@@ -51,8 +53,10 @@ use OCP\Files\InvalidCharacterInPathException;
 use OCP\Files\InvalidPathException;
 use OCP\Files\ReservedWordException;
 use OCP\Files\Storage\ILockingStorage;
+use OCP\Files\Storage\IPersistentLockingStorage;
 use OCP\Files\Storage\IVersionedStorage;
 use OCP\Lock\ILockingProvider;
+use Sabre\DAV\Exception\NotImplemented;
 
 /**
  * Storage backend class for providing common filesystem operation methods
@@ -65,7 +69,7 @@ use OCP\Lock\ILockingProvider;
  * Some \OC\Files\Storage\Common methods call functions which are first defined
  * in classes which extend it, e.g. $this->stat() .
  */
-abstract class Common implements Storage, ILockingStorage, IVersionedStorage {
+abstract class Common implements Storage, ILockingStorage, IVersionedStorage, IPersistentLockingStorage {
 	use LocalTempFileTrait;
 
 	protected $cache;
@@ -744,5 +748,61 @@ abstract class Common implements Storage, ILockingStorage, IVersionedStorage {
 	public function saveVersion($internalPath) {
 		// returning false here will trigger the fallback implementation
 		return false;
+	}
+
+	public function lockNodePersistent($internalPath, array $lockInfo) {
+		/** @var LockMapper $locksMapper */
+		$locksMapper = \OC::$server->query(LockMapper::class);
+		// We're making the lock timeout 30 minutes
+		$timeout = 30*60;
+		if (isset($lockInfo['timeout'])) {
+			$timeout = $lockInfo['timeout'];
+		}
+		$owner = $lockInfo['owner'] ?? null;
+		if ($owner === null && \OC::$server->getUserSession()->isLoggedIn()) {
+			$owner = \OC::$server->getUserSession()->getUser()->getDisplayName();
+		}
+
+		$storageId = $this->getCache()->getNumericStorageId();
+		$locks = $locksMapper->getLocksByPath($storageId, $internalPath, false);
+		$exists = false;
+		foreach ($locks as $lock) {
+			if ($lock->getToken() === $lockInfo['token']) {
+				$exists = true;
+				$lock->setCreatedAt(\time());
+				$lock->setTimeout($timeout);
+				$lock->setOwner($owner);
+				$locksMapper->update($lock);
+			}
+		}
+
+		if ($exists) {
+			return true;
+		}
+
+		$lock = new Lock();
+		$lock->setFileId($this->getCache()->getId($internalPath));
+		$lock->setCreatedAt(\time());
+		$lock->setTimeout($timeout);
+		$lock->setOwner($owner);
+		$lock->setToken($lockInfo['token']);
+		$lock->setScope($lockInfo['scope']);
+		$lock->setDepth($lockInfo['depth']);
+		$locksMapper->insert($lock);
+		return true;
+	}
+
+	public function unlockNodePersistent($internalPath, array $lockInfo) {
+		/** @var LockMapper $locksMapper */
+		$locksMapper = \OC::$server->query(LockMapper::class);
+		$fileId = $this->getCache()->getId($internalPath);
+		$locksMapper->deleteByFileIdAndToken($fileId, $lockInfo['token']);
+	}
+
+	public function getLocks($internalPath, $returnChildLocks = false) {
+		/** @var LockMapper $locksMapper */
+		$locksMapper = \OC::$server->query(LockMapper::class);
+		$storageId = $this->getCache()->getNumericStorageId();
+		return $locksMapper->getLocksByPath($storageId, $internalPath, $returnChildLocks);
 	}
 }
